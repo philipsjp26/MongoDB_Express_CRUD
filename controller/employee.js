@@ -19,7 +19,10 @@ const add_data =  async(req,res) => {
 		const add_employee = await employee_data.save();
 		if(!add_employee){
 			console.log("cannot add data to database")
-			return null
+			return res.status(404).json({
+				status: "failed",
+				message: "Data not found"
+			})
 		}
 
 		return res.status(201).json({
@@ -41,7 +44,10 @@ const get_all_data = async(req,res) => {
 
 		if(get_all.length == 0){
 			console.log("Data not found")
-			return null
+			return res.status(404).json({
+				status: "failed",
+				message: "Data not found"
+			})
 		}
 
 		return res.status(200).json({
@@ -57,13 +63,19 @@ const get_all_data = async(req,res) => {
 }
 const delete_by_id = async(req,res) => {
 	try {
-		const delete_data = await employee_models.findByIdAndDelete(req.params.id);
+		const delete_data = await employee_models.findByIdAndDelete(
+			{_id: req.params.id }
+		);
 		if(!delete_data){
 			console.log(`cannot delete data id:${req.params.id}`);
-			return null
+			return res.status(404).json({
+				status: "failed",
+				message: "Data not found"
+			})
 		}
 		return res.status(201).json({
-			status:'success deleted'
+			status:'success deleted',
+			content: delete_data
 		})
 	} catch (error) {
 		console.log(error.message);
@@ -76,11 +88,14 @@ const delete_by_id = async(req,res) => {
 const find_by_id = async(req,res) => {
 	try {
 		const get_data = await employee_models.findOne(
-			{ id: req.params.id }
+			{ _id: req.params.id }
 		).exec();
-		if(get_data.length == 0){
+		if(!get_data){
 			console.log("Data not found")
-			return null
+			return res.status(404).json({
+				status: "failed",
+				message: "Data not found"
+			})
 		}
 		return res.status(200).json({
 			status: "Success",
@@ -95,9 +110,39 @@ const find_by_id = async(req,res) => {
 	}
 }
 
+const find_and_update = async(req,res) => {
+	try {
+		if(!req.body.name || !req.body.age){
+			return res.status(404).json({
+				message: "required body field"
+			});
+		}
+		const update_data = await employee_models.findByIdAndUpdate(req.params.id,
+				{ name: req.body.name, age: req.body.age },{ new: true });
+		if(!update_data){
+			console.log("failed to update data")
+			return res.status(404).json({
+				message: 'failed to update data',
+				content: update_data
+			});
+		}
+		return res.status(200).json({
+			status: "success",
+			content: update_data
+		})
+	} catch (error) {
+		console.log(error.message);
+		return res.json({
+			status: 'failed',
+			message: error.message
+		})
+	}
+}
+
 module.exports = {
 	add_data,
 	get_all_data,
 	find_by_id,
-	delete_by_id
+	delete_by_id,
+	find_and_update
 }
