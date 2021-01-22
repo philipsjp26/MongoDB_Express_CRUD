@@ -9,4 +9,5 @@ const empSchema = new Schema({
         type: Number
     }
 });
-module.exports = model("Users", empSchema); 
+// first parameter in model is table_name
+module.exports = model("users", empSchema); 
